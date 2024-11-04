@@ -1,10 +1,10 @@
 package com.cybersport.Player_Service.service;
 
-import com.cybersport.Player_Service.api.v1.dto.PlayerDTO;
+import com.cybersport.Player_Service.api.v1.dto.PlayerDTORequest;
+import com.cybersport.Player_Service.api.v1.dto.PlayerDTOResponse;
 import com.cybersport.Player_Service.api.v1.dto.PlayerFindDTO;
 import com.cybersport.Player_Service.api.v1.mapper.PlayerMapper;
 import com.cybersport.Player_Service.entity.Player;
-import com.cybersport.Player_Service.service.PlayerDataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,14 +18,14 @@ public class PlayerService {
     @Autowired
     private PlayerMapper playerMapper;
 
-    public Long createPlayer(PlayerDTO playerDTO){
-        Player player = playerMapper.playerDTOToPlayer(playerDTO);
+    public Long createPlayer(PlayerDTORequest playerDTO){
+        Player player = playerMapper.playerDTORequestToPlayer(playerDTO);
         Long id = playerDataService.savePlayer(player);
         return id;
     }
 
-    public PlayerDTO getPlayerById(Long id){
-        return playerMapper.playerToPlayerDTO(playerDataService.findPlayerById(id));
+    public PlayerDTOResponse getPlayerById(Long id){
+        return playerMapper.playerToPlayerDTOResponse(playerDataService.findPlayerById(id));
     }
 
     public List<PlayerFindDTO> getPlayersContainNickname(String nickname){
@@ -38,7 +38,7 @@ public class PlayerService {
     public Object renicknamePlayer(Long id, String newNickname){
         Object result = playerDataService.renickPlayer(id, newNickname);
         if (result instanceof Player)
-            return playerMapper.playerToPlayerDTO((Player) result);
+            return playerMapper.playerToPlayerDTOResponse((Player) result);
         return result;
     }
 

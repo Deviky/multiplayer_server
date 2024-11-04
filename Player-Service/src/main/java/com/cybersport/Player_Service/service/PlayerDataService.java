@@ -1,7 +1,6 @@
 package com.cybersport.Player_Service.service;
 
 import com.cybersport.Player_Service.entity.Player;
-import com.cybersport.Player_Service.api.v1.dto.PlayerDTO;
 import com.cybersport.Player_Service.repository.PlayerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CachePut;
@@ -10,7 +9,6 @@ import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class PlayerDataService {
@@ -21,6 +19,7 @@ public class PlayerDataService {
     private RedisCacheService redisCacheService;
 
     public Long savePlayer(Player player){
+        player.setElo(1000);
         playerRepository.save(player);
         return player.getId();
     }

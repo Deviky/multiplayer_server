@@ -1,13 +1,16 @@
-package com.cybersport.Player_Service.api.v1.dto;
+package com.cybersport.room.api.v1.dto;
+
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class PlayerFindDTO {
-    private String nickname;
-    private Integer elo;
+@Builder
+public class Player {
+    String nickname;
+    Integer elo;
 }

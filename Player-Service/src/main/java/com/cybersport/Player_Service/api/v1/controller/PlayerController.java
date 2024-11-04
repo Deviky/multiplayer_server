@@ -1,6 +1,7 @@
 package com.cybersport.Player_Service.api.v1.controller;
 
-import com.cybersport.Player_Service.api.v1.dto.PlayerDTO;
+import com.cybersport.Player_Service.api.v1.dto.PlayerDTORequest;
+import com.cybersport.Player_Service.api.v1.dto.PlayerDTOResponse;
 import com.cybersport.Player_Service.api.v1.dto.PlayerFindDTO;
 import com.cybersport.Player_Service.service.PlayerService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +20,7 @@ public class PlayerController {
     private PlayerService playerService;
 
     @PostMapping("/create")
-    public ResponseEntity<Long> createPlayer(@RequestBody PlayerDTO player){
+    public ResponseEntity<Long> createPlayer(@RequestBody PlayerDTORequest player){
         Long id = playerService.createPlayer(player);
         return new ResponseEntity<>(id, HttpStatus.CREATED);
     }
@@ -31,15 +32,15 @@ public class PlayerController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PlayerDTO> findPlayer(@PathVariable Long id){
-        PlayerDTO player = playerService.getPlayerById(id);
+    public ResponseEntity<PlayerDTOResponse> findPlayer(@PathVariable Long id){
+        PlayerDTOResponse player = playerService.getPlayerById(id);
         if (player == null)
                 return ResponseEntity.notFound().build();
         return ResponseEntity.ok(player);
     }
 
-    @PutMapping("/renick/{id}")
-    public ResponseEntity<?> renickPlayer(@PathVariable Long id, @RequestParam String newNickname) {
+    @PutMapping("/renick")
+    public ResponseEntity<?> renickPlayer(@RequestParam Long id, @RequestParam String newNickname) {
         Object result = playerService.renicknamePlayer(id, newNickname);
 
         if (result == null) {

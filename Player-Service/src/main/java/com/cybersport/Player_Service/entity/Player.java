@@ -13,5 +13,5 @@ public class Player {
     @GeneratedValue(strategy = GenerationType.AUTO)
     Long id;
     String nickname;
-    String fullname;
+    Integer elo;
 }
