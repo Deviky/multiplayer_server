@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
+import static org.hibernate.query.sqm.tree.SqmNode.log;
+
 @Service
 @RequiredArgsConstructor
 public class RoomServiceData {
