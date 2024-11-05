@@ -6,6 +6,7 @@ import com.cybersport.room.entity.RoomPlayer;
 import com.cybersport.room.entity.RoomStatus;
 import com.cybersport.room.repository.RoomPlayerRepository;
 import com.cybersport.room.repository.RoomRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -53,6 +54,7 @@ public class RoomServiceData {
         return roomRepository.findAvailableRooms(RoomStatus.WAITING, 6);
     }
 
+    @Transactional
     public String joinToRoom(Long playerId, Long roomId) {
         if (isPlayerInRoom(playerId))
             return "ERROR: you are in another room now!";
@@ -84,6 +86,7 @@ public class RoomServiceData {
         return "You joined room " + roomId;
     }
 
+    @Transactional
     public String leaveFromRoom(Long playerId, Long roomId) {
         Optional<Room> roomOpt = roomRepository.findById(roomId);
         if (roomOpt.isEmpty()) {
@@ -119,7 +122,7 @@ public class RoomServiceData {
                 roomPlayerRepository.delete(playerToRemove);
                 roomRepository.save(room);
 
-                return "You left the room. New creator is player with ID: " + newCreator.getPlayerId();
+                return "New leader - " + newCreator.getPlayerId();
             }
         } else {
             roomPlayers.remove(playerToRemove);

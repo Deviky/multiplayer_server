@@ -40,7 +40,21 @@ public class RoomService {
     }
 
     public String leaveFromRoom(Long playerId, Long roomId){
-        return roomServiceData.leaveFromRoom(playerId, roomId);
+        String answer = roomServiceData.leaveFromRoom(playerId, roomId);
+        if (!answer.startsWith("ERROR")) {
+
+            if (answer.startsWith("New leader - ")) {
+                String[] parts = answer.split(" - ");
+                if (parts.length == 2) {
+                    Long newLeaderId = Long.parseLong(parts[1]);
+                    roomWebSocketService.notifyNewLeader(roomId, newLeaderId);
+                }
+            }
+            else
+                roomWebSocketService.notifyPlayerLeaved(roomId, playerId);
+
+        }
+        return answer;
     }
 
 }

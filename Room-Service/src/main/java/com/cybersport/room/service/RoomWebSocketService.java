@@ -20,5 +20,21 @@ public class RoomWebSocketService {
 
     }
 
+    public void notifyPlayerLeaved(Long roomId, Long playerId){
+        Player player = playerServiceClient.getPlayerById(playerId);
+        String message = "Игрок " + player.getNickname() + " вышел из комнаты";
+
+        simpMessagingTemplate.convertAndSend("/topic/room/" + roomId, message);
+
+    }
+
+    public void notifyNewLeader(Long roomId, Long newLeaderId){
+        Player newLeader= playerServiceClient.getPlayerById(newLeaderId);
+        String message = "Новый лидер -  " + newLeader.getNickname();
+        simpMessagingTemplate.convertAndSend("/topic/room/" + roomId, message);
+        String privateMessage = "Теперь вы новый лидер!";
+        simpMessagingTemplate.convertAndSend("/topic/player/" + newLeaderId, privateMessage);
+    }
+
 
 }

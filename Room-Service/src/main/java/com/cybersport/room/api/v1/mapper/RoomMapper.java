@@ -13,7 +13,8 @@ import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring")
 public interface RoomMapper {
-    @Mapping(target = "players", source = "roomPlayers")
+
+
     RoomDTO roomToRoomDTO(Room room);
 
     default List<Long> mapPlayers(List<RoomPlayer> roomPlayers) {
@@ -21,7 +22,7 @@ public interface RoomMapper {
             return Collections.emptyList();
         }
         return roomPlayers.stream()
-                .map(RoomPlayer::getPlayerId) // Убедитесь, что в RoomPlayer есть метод getPlayerId
+                .map(RoomPlayer::getPlayerId) // Убедитесь, что метод getPlayerId() существует
                 .collect(Collectors.toList());
     }
 }
