@@ -31,8 +31,8 @@ public class PlayerController {
         return ResponseEntity.ok(players);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<PlayerDTOResponse> findPlayer(@PathVariable Long id){
+    @GetMapping("/player")
+    public ResponseEntity<PlayerDTOResponse> findPlayer(@RequestParam Long id){
         PlayerDTOResponse player = playerService.getPlayerById(id);
         if (player == null)
                 return ResponseEntity.notFound().build();

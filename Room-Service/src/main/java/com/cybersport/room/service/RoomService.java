@@ -18,6 +18,9 @@ public class RoomService {
     @Autowired
     private RoomMapper roomMapper;
 
+    @Autowired
+    private RoomWebSocketService roomWebSocketService;
+
     public String createRoom(Long creatorId){
         return roomServiceData.createRoom(creatorId);
     }
@@ -30,7 +33,10 @@ public class RoomService {
     }
 
     public String joinToRoom(Long playerId, Long roomId){
-        return roomServiceData.joinToRoom(playerId, roomId);
+        String answer = roomServiceData.joinToRoom(playerId, roomId);
+        if (!answer.startsWith("ERROR"))
+            roomWebSocketService.notifyPlayerJoined(roomId, playerId);
+        return answer;
     }
 
     public String leaveFromRoom(Long playerId, Long roomId){
