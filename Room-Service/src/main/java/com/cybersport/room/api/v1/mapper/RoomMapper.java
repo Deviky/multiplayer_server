@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 @Mapper(componentModel = "spring")
 public interface RoomMapper {
 
-
+    @Mapping(target = "players", expression = "java(mapPlayers(room.getRoomPlayers()))")
     RoomDTO roomToRoomDTO(Room room);
 
     default List<Long> mapPlayers(List<RoomPlayer> roomPlayers) {
