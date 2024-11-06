@@ -25,4 +25,5 @@ public interface RoomMapper {
                 .map(RoomPlayer::getPlayerId) // Убедитесь, что метод getPlayerId() существует
                 .collect(Collectors.toList());
     }
+
 }

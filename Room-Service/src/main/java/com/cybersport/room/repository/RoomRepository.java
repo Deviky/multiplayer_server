@@ -1,7 +1,7 @@
 package com.cybersport.room.repository;
 
 import com.cybersport.room.entity.Room;
-import com.cybersport.room.entity.RoomStatus;
+import com.cybersport.room.enums.RoomStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,6 +17,7 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
 
     @Query("SELECT r FROM Room r WHERE r.status = :status AND SIZE(r.roomPlayers) < :maxPlayers")
     List<Room> findAvailableRooms(@Param("status") RoomStatus status, @Param("maxPlayers") int maxPlayers);
+
 }
 
 

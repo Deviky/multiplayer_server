@@ -1,5 +1,7 @@
 package com.cybersport.room.entity;
 
+import com.cybersport.room.enums.PlayerStatus;
+import com.cybersport.room.enums.PlayerTeam;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,5 +23,9 @@ public class RoomPlayer {
     @ManyToOne
     @JoinColumn(name = "room_id", nullable = false)
     private Room room;
+    @Enumerated(EnumType.STRING)
+    private PlayerStatus playerStatus;
+    @Enumerated(EnumType.STRING)
+    private PlayerTeam playerTeam;
 
 }

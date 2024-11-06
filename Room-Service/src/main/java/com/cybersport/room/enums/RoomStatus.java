@@ -1,4 +1,4 @@
-package com.cybersport.room.entity;
+package com.cybersport.room.enums;
 
 public enum RoomStatus {
     WAITING,

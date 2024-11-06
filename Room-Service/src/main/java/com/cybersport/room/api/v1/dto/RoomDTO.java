@@ -1,12 +1,10 @@
 package com.cybersport.room.api.v1.dto;
 
-import com.cybersport.room.entity.RoomStatus;
-import jakarta.persistence.*;
+import com.cybersport.room.enums.RoomStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.util.Pair;
 
 import java.time.LocalDateTime;
 import java.util.List;

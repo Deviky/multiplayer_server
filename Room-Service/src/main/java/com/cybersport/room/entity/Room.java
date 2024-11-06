@@ -1,11 +1,11 @@
 package com.cybersport.room.entity;
 
+import com.cybersport.room.enums.RoomStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.util.Pair;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -26,5 +26,6 @@ public class Room {
     private RoomStatus status;
     private Integer lowElo;
     private Integer highElo;
+    private Integer minPlayers;
     private LocalDateTime createdAt;
 }

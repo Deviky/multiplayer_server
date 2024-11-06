@@ -3,7 +3,9 @@ package com.cybersport.room.service;
 import com.cybersport.room.api.v1.dto.Player;
 import com.cybersport.room.entity.Room;
 import com.cybersport.room.entity.RoomPlayer;
-import com.cybersport.room.entity.RoomStatus;
+import com.cybersport.room.enums.PlayerStatus;
+import com.cybersport.room.enums.PlayerTeam;
+import com.cybersport.room.enums.RoomStatus;
 import com.cybersport.room.repository.RoomPlayerRepository;
 import com.cybersport.room.repository.RoomRepository;
 import jakarta.transaction.Transactional;
@@ -14,8 +16,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
-
-import static org.hibernate.query.sqm.tree.SqmNode.log;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,7 +26,9 @@ public class RoomServiceData {
     private final RoomPlayerRepository roomPlayerRepository;
     private final PlayerServiceClient playerServiceClient;
 
-    public String createRoom(Long creatorId) {
+
+    @Transactional
+    public String createRoom(Long creatorId, Integer minPlayers) {
         if (isPlayerInRoom(creatorId))
             return "ERROR: you are in another room now!";
 
@@ -36,11 +39,14 @@ public class RoomServiceData {
                 .status(RoomStatus.WAITING)
                 .lowElo(player.getElo() - 200)
                 .highElo(player.getElo() + 200)
+                .minPlayers(minPlayers)
                 .build();
 
         RoomPlayer creatorPlayer = RoomPlayer.builder()
                 .playerId(creatorId)
                 .room(room)
+                .playerTeam(PlayerTeam.NOTEAM)
+                .playerStatus(PlayerStatus.WAITSTART)
                 .build();
 
         creatorPlayer.setRoom(room);
@@ -49,6 +55,7 @@ public class RoomServiceData {
 
         return "Room created " + room.getId();
     }
+
 
     public List<Room> getAvailableRooms() {
         return roomRepository.findAvailableRooms(RoomStatus.WAITING, 6);
@@ -77,6 +84,8 @@ public class RoomServiceData {
         RoomPlayer roomPlayer = RoomPlayer.builder()
                 .playerId(playerId)
                 .room(room)
+                .playerTeam(PlayerTeam.NOTEAM)
+                .playerStatus(PlayerStatus.WAITSTART)
                 .build();
 
         roomPlayerRepository.save(roomPlayer);
@@ -119,6 +128,10 @@ public class RoomServiceData {
 
                 room.setCreator(newCreator.getPlayerId());
                 room.setRoomPlayers(roomPlayers);
+                if (room.getStatus().equals(RoomStatus.READY)){
+                    room.setStatus(RoomStatus.WAITING);
+                    updatePlayerStatusToWaitStart(roomId);
+                }
                 roomPlayerRepository.delete(playerToRemove);
                 roomRepository.save(room);
 
@@ -126,15 +139,98 @@ public class RoomServiceData {
             }
         } else {
             roomPlayers.remove(playerToRemove);
+            if (room.getStatus().equals(RoomStatus.READY)){
+                room.setStatus(RoomStatus.WAITING);
+                updatePlayerStatusToWaitStart(roomId);
+            }
             roomPlayerRepository.delete(playerToRemove);
             room.setRoomPlayers(roomPlayers);
             roomRepository.save(room);
             return "You left the room.";
         }
     }
-
+    @Transactional
     private boolean isPlayerInRoom(Long playerId) {
         List<Room> rooms = roomRepository.findRoomsByPlayerId(playerId);
         return !rooms.isEmpty();
     }
+
+    @Transactional
+    public String startGame(Long playerId, Long roomId) {
+        Optional<Room> roomOpt = roomRepository.findById(roomId);
+        if (roomOpt.isEmpty())
+            return "ERROR: FATAL!";
+        Room room = roomOpt.get();
+        if (!room.getCreator().equals(playerId))
+            return "ERROR: you're not a leader!";
+        if (room.getRoomPlayers().size() < room.getMinPlayers())
+            return "ERROR: not enough players to start the game";
+        updatePlayerStatusToNotAccepted(roomId);
+        room.setStatus(RoomStatus.READY);
+        roomRepository.save(room);
+        return "WAIT FOR ACCEPT!";
+    }
+
+    @Transactional
+    public String acceptGame(Long playerId, Long roomId){
+        RoomPlayer roomPlayer = roomPlayerRepository.findByPlayerId(playerId);
+        Optional<Room> roomOpt = roomRepository.findById(roomId);
+        if (roomOpt.isEmpty())
+            return "ERROR: FATAL!";
+        Room room = roomOpt.get();
+        if (roomPlayer == null)
+            return "ERROR: FATAL!";
+        if (!roomPlayer.getRoom().getId().equals(roomId))
+            return "ERROR: you're not in this room!";
+        if (!roomPlayer.getPlayerStatus().equals(PlayerStatus.NOTACCEPTED))
+            return "ERROR: you have another status";
+        roomPlayer.setPlayerStatus(PlayerStatus.ACCEPTED);
+        roomPlayerRepository.save(roomPlayer);
+        int playersAcceptedCount = getAcceptedPlayersCount(roomId);
+        if (playersAcceptedCount == room.getMinPlayers()){
+            room.setStatus(RoomStatus.INGAME);
+            roomRepository.save(room);
+            return "START GAME!";
+        }
+        return "You accept! Players accepted - " + playersAcceptedCount;
+    }
+
+    private int getAcceptedPlayersCount(Long roomId) {
+        List<RoomPlayer> roomPlayers = roomPlayerRepository.findByRoomId(roomId);
+        return (int) roomPlayers.stream()
+                .filter(player -> player.getPlayerStatus() == PlayerStatus.ACCEPTED)
+                .count();
+    }
+
+    @Transactional
+    private void updatePlayerStatusToNotAccepted(Long roomId) {
+        List<RoomPlayer> roomPlayers = roomPlayerRepository.findByRoomId(roomId);
+
+        roomPlayers.forEach(roomPlayer -> roomPlayer.setPlayerStatus(PlayerStatus.NOTACCEPTED));
+
+        roomPlayerRepository.saveAll(roomPlayers);
+    }
+
+    @Transactional
+    private void updatePlayerStatusToWaitStart(Long roomId) {
+        List<RoomPlayer> roomPlayers = roomPlayerRepository.findByRoomId(roomId);
+
+        roomPlayers.forEach(roomPlayer -> roomPlayer.setPlayerStatus(PlayerStatus.WAITSTART));
+
+        roomPlayerRepository.saveAll(roomPlayers);
+    }
+
+
+    public List<Long> getPlayersNotAccepted(Long roomId){
+        List<RoomPlayer> players = roomPlayerRepository.findByRoomId(roomId);
+        return players.stream()
+                .filter(player -> player.getPlayerStatus() == PlayerStatus.NOTACCEPTED)
+                .map(RoomPlayer::getPlayerId)
+                .collect(Collectors.toList());
+    }
+
+
+
+
+
 }
