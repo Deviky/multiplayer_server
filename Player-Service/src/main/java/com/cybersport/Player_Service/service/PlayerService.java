@@ -2,7 +2,6 @@ package com.cybersport.Player_Service.service;
 
 import com.cybersport.Player_Service.api.v1.dto.PlayerDTORequest;
 import com.cybersport.Player_Service.api.v1.dto.PlayerDTOResponse;
-import com.cybersport.Player_Service.api.v1.dto.PlayerFindDTO;
 import com.cybersport.Player_Service.api.v1.mapper.PlayerMapper;
 import com.cybersport.Player_Service.entity.Player;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,10 +27,10 @@ public class PlayerService {
         return playerMapper.playerToPlayerDTOResponse(playerDataService.findPlayerById(id));
     }
 
-    public List<PlayerFindDTO> getPlayersContainNickname(String nickname){
+    public List<PlayerDTOResponse> getPlayersContainNickname(String nickname){
         return playerDataService.findPlayersContainNickname(nickname)
                 .stream()
-                .map(playerMapper::playerToPlayerFindDTO)
+                .map(playerMapper::playerToPlayerDTOResponse)
                 .collect(Collectors.toList());
     }
 

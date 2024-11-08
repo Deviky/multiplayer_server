@@ -1,6 +1,6 @@
 package com.cybersport.room.service;
 
-import com.cybersport.room.api.v1.dto.Player;
+import com.cybersport.room.api.v1.dto.*;
 import com.cybersport.room.entity.Room;
 import com.cybersport.room.entity.RoomPlayer;
 import com.cybersport.room.enums.PlayerStatus;
@@ -28,9 +28,13 @@ public class RoomServiceData {
 
 
     @Transactional
-    public String createRoom(Long creatorId, Integer minPlayers) {
-        if (isPlayerInRoom(creatorId))
-            return "ERROR: you are in another room now!";
+    public CreateRoomResponseDTO createRoom(Long creatorId, Integer minPlayers) {
+        if (isPlayerInRoom(creatorId)){
+            return CreateRoomResponseDTO.builder()
+                    .roomId(null)
+                    .message("ERROR: you are in another room now!")
+                    .build();
+        }
 
         Player player = playerServiceClient.getPlayerById(creatorId);
         Room room = Room.builder()
@@ -53,7 +57,10 @@ public class RoomServiceData {
         roomRepository.save(room);
         roomPlayerRepository.save(creatorPlayer);
 
-        return "Room created " + room.getId();
+        return CreateRoomResponseDTO.builder()
+                .roomId(room.getId())
+                .message("Room created")
+                .build();
     }
 
 
@@ -62,24 +69,48 @@ public class RoomServiceData {
     }
 
     @Transactional
-    public String joinToRoom(Long playerId, Long roomId) {
-        if (isPlayerInRoom(playerId))
-            return "ERROR: you are in another room now!";
-
+    public JoinRoomResponseDTO joinToRoom(Long playerId, Long roomId) {
         Player player = playerServiceClient.getPlayerById(playerId);
         Optional<Room> roomOpt = roomRepository.findById(roomId);
-        if (player == null || roomOpt.isEmpty())
-            return "ERROR: FATAL!!";
+        if (player == null || roomOpt.isEmpty()) {
+            return JoinRoomResponseDTO.builder()
+                    .isError(true)
+                    .message("FATAL ERROR!")
+                    .roomInfo(null)
+                    .build();
+        }
+
+        if (isPlayerInRoom(playerId)){
+            return JoinRoomResponseDTO.builder()
+                    .isError(true)
+                    .message("ERROR: You are in another room!")
+                    .roomInfo(null)
+                    .build();
+        }
 
         Room room = roomOpt.get();
-        if (room.getRoomPlayers().size() >= 6)
-            return "ERROR: Room overflow!";
-        if (room.getStatus() != RoomStatus.WAITING)
-            return "ERROR: Room is not available now!";
-
+        if (room.getRoomPlayers().size() >= 6) {
+            return JoinRoomResponseDTO.builder()
+                    .isError(true)
+                    .message("ERROR: room is crowded!")
+                    .roomInfo(null)
+                    .build();
+        }
+        if (room.getStatus() != RoomStatus.WAITING) {
+            return JoinRoomResponseDTO.builder()
+                    .isError(true)
+                    .message("ERROR: room is not available now!")
+                    .roomInfo(null)
+                    .build();
+        }
         int playerElo = player.getElo();
-        if (playerElo <= room.getLowElo() || playerElo >= room.getHighElo())
-            return "ERROR: You can't join with your elo!";
+        if (playerElo <= room.getLowElo() || playerElo >= room.getHighElo()) {
+            return JoinRoomResponseDTO.builder()
+                    .isError(true)
+                    .message("ERROR: you can't join to this room with your elo!")
+                    .roomInfo(null)
+                    .build();
+        }
 
         RoomPlayer roomPlayer = RoomPlayer.builder()
                 .playerId(playerId)
@@ -92,14 +123,48 @@ public class RoomServiceData {
         room.getRoomPlayers().add(roomPlayer);
         roomRepository.save(room);
 
-        return "You joined room " + roomId;
+        return JoinRoomResponseDTO.builder()
+                .isError(false)
+                .message("You have joined!")
+                .roomInfo(getRoomInfo(room))
+                .build();
+    }
+
+
+    private RoomInfoDTO getRoomInfo(Room room){
+        List<RoomPlayer> roomPlayers = room.getRoomPlayers();
+
+        List<Player> players = roomPlayers.stream()
+                .map(roomPlayer -> playerServiceClient.getPlayerById(roomPlayer.getPlayerId()))
+                .collect(Collectors.toList());
+
+        return RoomInfoDTO.builder()
+                .id(room.getId())
+                .players(players)
+                .creator(room.getCreator())
+                .status(room.getStatus())
+                .lowElo(room.getLowElo())
+                .highElo(room.getHighElo())
+                .createdAt(room.getCreatedAt())
+                .build();
+
+    }
+
+
+    public Room findRoomById(Long roomId){
+        return roomRepository.findById(roomId).orElse(null);
     }
 
     @Transactional
-    public String leaveFromRoom(Long playerId, Long roomId) {
+    public LeaveRoomResponseDTO leaveFromRoom(Long playerId, Long roomId) {
         Optional<Room> roomOpt = roomRepository.findById(roomId);
         if (roomOpt.isEmpty()) {
-            return "ERROR: FATAL!";
+            return LeaveRoomResponseDTO.builder()
+                    .isError(true)
+                    .message("FATAL ERROR")
+                    .isNewCreator(false)
+                    .creator(null)
+                    .build();
         }
 
         Room room = roomOpt.get();
@@ -112,13 +177,23 @@ public class RoomServiceData {
                 .orElse(null);
 
         if (playerToRemove == null) {
-            return "ERROR: Player not found in the room.";
+            return LeaveRoomResponseDTO.builder()
+                    .isError(true)
+                    .message("ERROR: Player not found in the room.")
+                    .isNewCreator(false)
+                    .creator(null)
+                    .build();
         }
 
         if (playerId.equals(room.getCreator())) {
             if (roomPlayers.size() <= 1) {
                 roomRepository.deleteById(roomId);
-                return "You left the room, and the room was destroyed.";
+                return LeaveRoomResponseDTO.builder()
+                        .isError(false)
+                        .message("You left the room, and the room was destroyed.")
+                        .isNewCreator(false)
+                        .creator(null)
+                        .build();
             } else {
                 roomPlayers.remove(playerToRemove);
 
@@ -135,7 +210,12 @@ public class RoomServiceData {
                 roomPlayerRepository.delete(playerToRemove);
                 roomRepository.save(room);
 
-                return "New leader - " + newCreator.getPlayerId();
+                return LeaveRoomResponseDTO.builder()
+                        .isError(false)
+                        .message("You left the room!")
+                        .isNewCreator(true)
+                        .creator(newCreator.getPlayerId())
+                        .build();
             }
         } else {
             roomPlayers.remove(playerToRemove);
@@ -146,7 +226,12 @@ public class RoomServiceData {
             roomPlayerRepository.delete(playerToRemove);
             room.setRoomPlayers(roomPlayers);
             roomRepository.save(room);
-            return "You left the room.";
+            return LeaveRoomResponseDTO.builder()
+                    .isError(false)
+                    .message("You left the room!")
+                    .isNewCreator(false)
+                    .creator(null)
+                    .build();
         }
     }
     @Transactional
@@ -156,43 +241,85 @@ public class RoomServiceData {
     }
 
     @Transactional
-    public String startGame(Long playerId, Long roomId) {
+    public StartGameRoomResponse startGame(Long playerId, Long roomId) {
         Optional<Room> roomOpt = roomRepository.findById(roomId);
         if (roomOpt.isEmpty())
-            return "ERROR: FATAL!";
+            return StartGameRoomResponse.builder()
+                    .isError(true)
+                    .message("ERROR: FATAL!")
+                    .build();
         Room room = roomOpt.get();
         if (!room.getCreator().equals(playerId))
-            return "ERROR: you're not a leader!";
+            return StartGameRoomResponse.builder()
+                    .isError(true)
+                    .message("ERROR: you're not a leader!")
+                    .build();
         if (room.getRoomPlayers().size() < room.getMinPlayers())
-            return "ERROR: not enough players to start the game";
+            return StartGameRoomResponse.builder()
+                    .isError(true)
+                    .message("ERROR: not enough players to start the game")
+                    .build();
         updatePlayerStatusToNotAccepted(roomId);
         room.setStatus(RoomStatus.READY);
         roomRepository.save(room);
-        return "WAIT FOR ACCEPT!";
+        return StartGameRoomResponse.builder()
+                .isError(false)
+                .message("WAIT FOR ACCEPT!")
+                .build();
     }
 
     @Transactional
-    public String acceptGame(Long playerId, Long roomId){
+    public AcceptGameRoomDTO acceptGame(Long playerId, Long roomId){
         RoomPlayer roomPlayer = roomPlayerRepository.findByPlayerId(playerId);
         Optional<Room> roomOpt = roomRepository.findById(roomId);
         if (roomOpt.isEmpty())
-            return "ERROR: FATAL!";
+            return AcceptGameRoomDTO.builder()
+                    .isError(true)
+                    .isLast(false)
+                    .message("ERROR: FATAL!")
+                    .playerAcceptedCount(null)
+                    .build();
         Room room = roomOpt.get();
         if (roomPlayer == null)
-            return "ERROR: FATAL!";
+            return AcceptGameRoomDTO.builder()
+                    .isError(true)
+                    .isLast(false)
+                    .message("ERROR: FATAL!")
+                    .playerAcceptedCount(null)
+                    .build();
         if (!roomPlayer.getRoom().getId().equals(roomId))
-            return "ERROR: you're not in this room!";
+            return AcceptGameRoomDTO.builder()
+                    .isError(true)
+                    .isLast(false)
+                    .message("ERROR: you're not in this room!")
+                    .playerAcceptedCount(null)
+                    .build();
         if (!roomPlayer.getPlayerStatus().equals(PlayerStatus.NOTACCEPTED))
-            return "ERROR: you have another status";
+            return AcceptGameRoomDTO.builder()
+                    .isError(true)
+                    .isLast(false)
+                    .message("ERROR: you have another status")
+                    .playerAcceptedCount(null)
+                    .build();
         roomPlayer.setPlayerStatus(PlayerStatus.ACCEPTED);
         roomPlayerRepository.save(roomPlayer);
         int playersAcceptedCount = getAcceptedPlayersCount(roomId);
         if (playersAcceptedCount == room.getMinPlayers()){
             room.setStatus(RoomStatus.INGAME);
             roomRepository.save(room);
-            return "START GAME!";
+            return AcceptGameRoomDTO.builder()
+                    .isError(false)
+                    .isLast(true)
+                    .message("START GAME!")
+                    .playerAcceptedCount(playersAcceptedCount)
+                    .build();
         }
-        return "You accept! Players accepted - " + playersAcceptedCount;
+        return AcceptGameRoomDTO.builder()
+                .isError(false)
+                .isLast(false)
+                .message("Wait another player!")
+                .playerAcceptedCount(playersAcceptedCount)
+                .build();
     }
 
     private int getAcceptedPlayersCount(Long roomId) {

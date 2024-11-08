@@ -4,6 +4,14 @@
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
+        <option name="externalProjectPath" value="$PROJECT_DIR$/Game-Service" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/Game-Service" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+      <GradleProjectSettings>
         <option name="externalProjectPath" value="$PROJECT_DIR$/Player-Service" />
         <option name="gradleJvm" value="21" />
         <option name="modules">
@@ -17,6 +25,14 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$/Room-Service" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+      <GradleProjectSettings>
+        <option name="externalProjectPath" value="$PROJECT_DIR$/Signaling-Service" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/Signaling-Service" />
           </set>
         </option>
       </GradleProjectSettings>

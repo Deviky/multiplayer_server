@@ -7,11 +7,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
-public class Player {
-    Long id;
-    String nickname;
-    Integer elo;
+public class LeaveRoomResponseDTO {
+    boolean isError;
+    String message;
+    boolean isNewCreator;
+    Long creator;
 }

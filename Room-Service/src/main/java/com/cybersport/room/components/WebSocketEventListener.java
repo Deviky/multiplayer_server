@@ -1,6 +1,7 @@
 package com.cybersport.room.components;
 
 import com.cybersport.room.service.RoomService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
@@ -12,16 +13,13 @@ import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 @Component
 public class WebSocketEventListener {
 
-    private final RoomService roomService;
-
-    public WebSocketEventListener(RoomService roomService) {
-        this.roomService = roomService;
-    }
-
+    @Autowired
+    private RoomService roomService;
 
 
     @EventListener
     public void handleWebSocketConnectListener(SessionConnectedEvent event) {
+
         MessageHeaderAccessor headerAccessor =
                 MessageHeaderAccessor.getAccessor(event.getMessage().getHeaders(), MessageHeaderAccessor.class);
 
@@ -55,7 +53,7 @@ public class WebSocketEventListener {
         Long roomId = (Long) headerAccessor.getSessionAttributes().get("roomId");
 
         if (playerId != null && roomId != null) {
-            roomService.leaveFromRoom(playerId, roomId); // Удаление игрока из комнаты
+            roomService.leaveFromRoom(playerId, roomId);
         }
     }
 }

@@ -9,3 +9,5 @@ public interface RoomPlayerRepository extends JpaRepository<RoomPlayer, Long> {
     List<RoomPlayer> findByRoomId(Long roomId);
     RoomPlayer findByPlayerId(Long playerId);
 }
+
+

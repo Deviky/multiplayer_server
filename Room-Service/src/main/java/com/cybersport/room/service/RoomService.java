@@ -1,8 +1,7 @@
 package com.cybersport.room.service;
 
-import com.cybersport.room.api.v1.dto.RoomDTO;
+import com.cybersport.room.api.v1.dto.*;
 import com.cybersport.room.api.v1.mapper.RoomMapper;
-import com.cybersport.room.entity.Room;
 import jakarta.annotation.PreDestroy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,11 +23,14 @@ public class RoomService {
     @Autowired
     private RoomWebSocketService roomWebSocketService;
 
+    @Autowired
+    private RoomProducerService roomProducerService;
+
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private final ConcurrentMap<Long, ScheduledFuture<?>> roomTimers = new ConcurrentHashMap<>();
     private static final long ACCEPT_TIMEOUT_SECONDS = 30;
 
-    public String createRoom(Long creatorId, Integer minPlayers){
+    public CreateRoomResponseDTO createRoom(Long creatorId, Integer minPlayers){
         return roomServiceData.createRoom(creatorId, minPlayers);
     }
 
@@ -39,32 +41,29 @@ public class RoomService {
                 .collect(Collectors.toList());
     }
 
-    public String joinToRoom(Long playerId, Long roomId){
-        String answer = roomServiceData.joinToRoom(playerId, roomId);
-        if (!answer.startsWith("ERROR"))
+    public JoinRoomResponseDTO joinToRoom(Long playerId, Long roomId){
+        JoinRoomResponseDTO answer = roomServiceData.joinToRoom(playerId, roomId);
+        if (!answer.isError())
             roomWebSocketService.notifyPlayerJoined(roomId, playerId);
         return answer;
     }
 
-    public String leaveFromRoom(Long playerId, Long roomId){
-        String answer = roomServiceData.leaveFromRoom(playerId, roomId);
-        if (!answer.startsWith("ERROR")) {
+    public LeaveRoomResponseDTO leaveFromRoom(Long playerId, Long roomId){
+        LeaveRoomResponseDTO answer = roomServiceData.leaveFromRoom(playerId, roomId);
+        if (!answer.isError()) {
             roomWebSocketService.notifyPlayerLeaved(roomId, playerId);
-            if (answer.startsWith("New leader - ")) {
-                String[] parts = answer.split(" - ");
-                if (parts.length == 2) {
-                    Long newLeaderId = Long.parseLong(parts[1]);
-                    roomWebSocketService.notifyPlayerLeaved(roomId, playerId);
-                    roomWebSocketService.notifyNewLeader(roomId, newLeaderId);
-                }
+            if (answer.isNewCreator()) {
+                roomWebSocketService.notifyPlayerLeaved(roomId, playerId);
+                roomWebSocketService.notifyNewLeader(roomId, answer.getCreator());
             }
+
         }
         return answer;
     }
 
-    public String startGame(Long playerId, Long roomId) {
-        String answer = roomServiceData.startGame(playerId, roomId);
-        if (!answer.startsWith("ERROR")) {
+    public StartGameRoomResponse startGame(Long playerId, Long roomId) {
+        StartGameRoomResponse answer = roomServiceData.startGame(playerId, roomId);
+        if (!answer.isError()) {
             roomWebSocketService.notifyToAcceptGame(roomId);
             startRoomAcceptanceTimer(roomId);
         }
@@ -95,8 +94,9 @@ public class RoomService {
     public void timeOutedToAccept(Long roomId){
         roomWebSocketService.notifyToTimeOut(roomId);
         List<Long> players = roomServiceData.getPlayersNotAccepted(roomId);
-        for (Long playerId : players)
+        for (Long playerId : players) {
             leaveFromRoom(playerId, roomId);
+        }
         roomTimers.remove(roomId);
     }
 
@@ -113,18 +113,19 @@ public class RoomService {
         }
     }
 
-    public String acceptGame(Long playerId, Long roomId) {
-        String answer = roomServiceData.acceptGame(playerId, roomId);
-        if (!answer.startsWith("ERROR")) {
-            if (answer.startsWith("You accept!")) {
-                String[] parts = answer.split(" - ");
-                if (parts.length == 2) {
-                    Integer countNow = Integer.parseInt(parts[1]);
-                    roomWebSocketService.updateAcceptedPlayers(roomId, countNow);
-                }
+    public AcceptGameRoomDTO acceptGame(Long playerId, Long roomId) {
+        AcceptGameRoomDTO answer = roomServiceData.acceptGame(playerId, roomId);
+        if (!answer.isError()) {
+            if (!answer.isLast()) {
+                roomWebSocketService.updateAcceptedPlayers(roomId, answer.getPlayerAcceptedCount());
             }
-            else if (answer.startsWith("START GAME!")){
+            else {
                 roomWebSocketService.notifyToStartGame(roomId);
+                roomProducerService.notifyGameService(
+                        roomMapper.roomToRoomDTO(
+                                roomServiceData.findRoomById(roomId)
+                        )
+                );
             }
         }
         return answer;

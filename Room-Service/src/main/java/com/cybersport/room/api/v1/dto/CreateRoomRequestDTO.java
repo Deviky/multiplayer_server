@@ -10,8 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Player {
-    Long id;
-    String nickname;
-    Integer elo;
+public class CreateRoomRequestDTO {
+    private Long creatorId;
+    private Integer minPlayers;
 }

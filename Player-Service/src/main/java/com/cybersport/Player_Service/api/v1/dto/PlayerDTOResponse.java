@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PlayerDTOResponse {
+    private Long id;
     private String nickname;
     private Integer elo;
 }

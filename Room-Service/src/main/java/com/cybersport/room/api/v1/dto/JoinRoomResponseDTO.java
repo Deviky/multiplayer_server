@@ -7,10 +7,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
-public class CreateRoomDTO {
-    private Long creatorId;
-    private Integer minPlayers;
+public class JoinRoomResponseDTO {
+    boolean isError;
+    String message;
+    RoomInfoDTO roomInfo;
 }

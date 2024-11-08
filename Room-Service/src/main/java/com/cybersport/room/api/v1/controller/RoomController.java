@@ -1,7 +1,6 @@
 package com.cybersport.room.api.v1.controller;
 
-import com.cybersport.room.api.v1.dto.CreateRoomDTO;
-import com.cybersport.room.api.v1.dto.RoomDTO;
+import com.cybersport.room.api.v1.dto.*;
 import com.cybersport.room.service.RoomService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,13 +17,16 @@ public class RoomController {
     private RoomService roomService;
 
     @PostMapping("/create")
-    public ResponseEntity<String> createRoom(@RequestBody CreateRoomDTO request) {
+    public ResponseEntity<CreateRoomResponseDTO> createRoom(@RequestBody CreateRoomRequestDTO request) {
         int minPlayers = request.getMinPlayers();
         if (minPlayers < 2 || minPlayers > 6 || minPlayers%2!=0)
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Bad players count");
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(CreateRoomResponseDTO.builder()
+                    .roomId(null)
+                    .message("Bad players count!")
+                    .build());
 
-        String response = roomService.createRoom(request.getCreatorId(), request.getMinPlayers());
-        if (response.startsWith("ERROR"))
+        CreateRoomResponseDTO response = roomService.createRoom(request.getCreatorId(), minPlayers);
+        if (response.getRoomId() == null)
             return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
         else
             return ResponseEntity.ok(response);
@@ -35,40 +37,40 @@ public class RoomController {
     }
 
     @PostMapping("/joinToRoom/{roomId}")
-    public ResponseEntity<String> joinToRoom(@RequestBody Long playerId, @PathVariable Long roomId){
-        String response = roomService.joinToRoom(playerId, roomId);
-        if (response.startsWith("ERROR"))
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    public ResponseEntity<RoomInfoDTO> joinToRoom(@RequestBody Long playerId, @PathVariable Long roomId){
+        JoinRoomResponseDTO response = roomService.joinToRoom(playerId, roomId);
+        if (response.isError())
+            return ResponseEntity.status(HttpStatus.CONFLICT).header(response.getMessage()).body(null);
         else
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(response.getRoomInfo());
     }
 
     @DeleteMapping("/leaveFromRoom/{roomId}")
     public ResponseEntity<String> leaveFromRoom(@RequestBody Long playerId, @PathVariable Long roomId){
-        String response = roomService.leaveFromRoom(playerId, roomId);
-        if (response.startsWith("ERROR"))
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        LeaveRoomResponseDTO response = roomService.leaveFromRoom(playerId, roomId);
+        if (response.isError())
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response.getMessage());
         else
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(response.getMessage());
     }
 
 
     @PostMapping("/startGame/{roomId}")
     public ResponseEntity<String> startGame(@RequestBody Long playerId, @PathVariable Long roomId){
-        String response = roomService.startGame(playerId, roomId);
-        if (response.startsWith("ERROR"))
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        StartGameRoomResponse response = roomService.startGame(playerId, roomId);
+        if (response.isError())
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response.getMessage());
         else
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(response.getMessage());
     }
 
     @PostMapping("/acceptGame/{roomId}")
     public ResponseEntity<String> acceptGame(@RequestBody Long playerId, @PathVariable Long roomId){
-        String response = roomService.acceptGame(playerId, roomId);
-        if (response.startsWith("ERROR"))
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        AcceptGameRoomDTO response = roomService.acceptGame(playerId, roomId);
+        if (response.isError())
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response.getMessage());
         else
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(response.getMessage());
     }
 
 }
