@@ -8,6 +8,8 @@ public enum WebSocketMessageType {
     YOU_NEW_LEADER,
     PLAYER_ACCEPT_GAME,
     START_CONNECTION,
-    TIME_OUT
+    TIME_OUT,
+
+    SERVER_PORT
 
 }

@@ -24,7 +24,7 @@ public class RoomService {
     private RoomWebSocketService roomWebSocketService;
 
     @Autowired
-    private RoomProducerService roomProducerService;
+    private GameServiceClient gameServiceClient;
 
     @Autowired
     private RoomRedisService roomRedisService;
@@ -120,18 +120,20 @@ public class RoomService {
     public AcceptGameRoomDTO acceptGame(PlayerGameData playerGameData, Long roomId) {
         AcceptGameRoomDTO answer = roomServiceData.acceptGame(playerGameData.getPlayerId(), roomId);
         if (!answer.isError()) {
+            roomRedisService.addPlayerGameInfo(roomId, playerGameData);
             if (!answer.isLast()) {
                 roomWebSocketService.updateAcceptedPlayers(roomId, answer.getPlayerAcceptedCount());
-                roomRedisService.addPlayerGameInfo(roomId, playerGameData);
             }
             else {
                 roomWebSocketService.notifyToStartGame(roomId);
-                roomProducerService.notifyGameService(
+                int serverPort = gameServiceClient.createGameRoom(
                         RoomGameData.builder()
                                 .roomId(roomId)
                                 .players(roomRedisService.getAllPlayersGameData(roomId))
                                 .build()
                 );
+                roomWebSocketService.sendServerPort(roomId, serverPort);
+
             }
         }
         return answer;

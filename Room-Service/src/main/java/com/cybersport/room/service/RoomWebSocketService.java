@@ -96,4 +96,12 @@ public class RoomWebSocketService {
         simpMessagingTemplate.convertAndSend("/topic/room/" + roomId, wsMessage);
     }
 
+    public void sendServerPort(Long roomId, Integer serverPort) {
+        String message = serverPort.toString();
+        WebSocketRoomMessage wsMessage = WebSocketRoomMessage.builder()
+                .Type(WebSocketMessageType.SERVER_PORT)
+                .message(message)
+                .build();
+        simpMessagingTemplate.convertAndSend("/topic/room/" + roomId, wsMessage);
+    }
 }
