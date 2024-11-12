@@ -65,8 +65,8 @@ public class RoomController {
     }
 
     @PostMapping("/acceptGame/{roomId}")
-    public ResponseEntity<String> acceptGame(@RequestBody Long playerId, @PathVariable Long roomId){
-        AcceptGameRoomDTO response = roomService.acceptGame(playerId, roomId);
+    public ResponseEntity<String> acceptGame(@PathVariable Long roomId,@RequestBody PlayerGameData playerGameData){
+        AcceptGameRoomDTO response = roomService.acceptGame(playerGameData, roomId);
         if (response.isError())
             return ResponseEntity.status(HttpStatus.CONFLICT).body(response.getMessage());
         else

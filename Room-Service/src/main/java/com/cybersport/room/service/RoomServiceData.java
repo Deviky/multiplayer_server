@@ -356,8 +356,4 @@ public class RoomServiceData {
                 .collect(Collectors.toList());
     }
 
-
-
-
-
 }

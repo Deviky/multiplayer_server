@@ -1,11 +1,13 @@
 spring:
   application:
     name: Room-Service
+
   datasource:
     url: jdbc:mysql://localhost:3306/cybersport
     username: root
     password: 915327
     driver-class-name: com.mysql.cj.jdbc.Driver
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -14,8 +16,24 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.MySQL8Dialect
+
+  redis:
+    host: localhost
+    port: 6379
+    timeout: 6000
+    database: 2
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    virtual-host: /
+    connection-timeout: 5000
+
+
 server:
   port: 8093
+
+
 logging:
   level:
     org.springframework.cache: DEBUG

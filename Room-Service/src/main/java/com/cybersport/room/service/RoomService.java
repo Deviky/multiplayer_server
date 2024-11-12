@@ -26,6 +26,9 @@ public class RoomService {
     @Autowired
     private RoomProducerService roomProducerService;
 
+    @Autowired
+    private RoomRedisService roomRedisService;
+
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private final ConcurrentMap<Long, ScheduledFuture<?>> roomTimers = new ConcurrentHashMap<>();
     private static final long ACCEPT_TIMEOUT_SECONDS = 30;
@@ -52,11 +55,11 @@ public class RoomService {
         LeaveRoomResponseDTO answer = roomServiceData.leaveFromRoom(playerId, roomId);
         if (!answer.isError()) {
             roomWebSocketService.notifyPlayerLeaved(roomId, playerId);
+            roomRedisService.clearRoomData(roomId);
             if (answer.isNewCreator()) {
                 roomWebSocketService.notifyPlayerLeaved(roomId, playerId);
                 roomWebSocketService.notifyNewLeader(roomId, answer.getCreator());
             }
-
         }
         return answer;
     }
@@ -93,6 +96,7 @@ public class RoomService {
 
     public void timeOutedToAccept(Long roomId){
         roomWebSocketService.notifyToTimeOut(roomId);
+        roomRedisService.clearRoomData(roomId);
         List<Long> players = roomServiceData.getPlayersNotAccepted(roomId);
         for (Long playerId : players) {
             leaveFromRoom(playerId, roomId);
@@ -113,18 +117,20 @@ public class RoomService {
         }
     }
 
-    public AcceptGameRoomDTO acceptGame(Long playerId, Long roomId) {
-        AcceptGameRoomDTO answer = roomServiceData.acceptGame(playerId, roomId);
+    public AcceptGameRoomDTO acceptGame(PlayerGameData playerGameData, Long roomId) {
+        AcceptGameRoomDTO answer = roomServiceData.acceptGame(playerGameData.getPlayerId(), roomId);
         if (!answer.isError()) {
             if (!answer.isLast()) {
                 roomWebSocketService.updateAcceptedPlayers(roomId, answer.getPlayerAcceptedCount());
+                roomRedisService.addPlayerGameInfo(roomId, playerGameData);
             }
             else {
                 roomWebSocketService.notifyToStartGame(roomId);
                 roomProducerService.notifyGameService(
-                        roomMapper.roomToRoomDTO(
-                                roomServiceData.findRoomById(roomId)
-                        )
+                        RoomGameData.builder()
+                                .roomId(roomId)
+                                .players(roomRedisService.getAllPlayersGameData(roomId))
+                                .build()
                 );
             }
         }
