@@ -6,6 +6,7 @@ import com.cybersport.room.entity.Room;
 import com.cybersport.room.entity.RoomPlayer;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.Named;
 
 import java.util.Collections;
 import java.util.List;
@@ -22,7 +23,7 @@ public interface RoomMapper {
             return Collections.emptyList();
         }
         return roomPlayers.stream()
-                .map(RoomPlayer::getPlayerId) // Убедитесь, что метод getPlayerId() существует
+                .map(RoomPlayer::getPlayerId)
                 .collect(Collectors.toList());
     }
 

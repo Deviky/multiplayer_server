@@ -1,4 +1,4 @@
-package com.cybersport.Game_Service.server;
+package com.cybersport.Game_Service.service;
 
 
 import com.cybersport.Game_Service.dto.Player;
@@ -23,7 +23,6 @@ public class GameService {
 
 
         return serverPort;
-
     }
 
     private Player convertToPlayer(PlayerGameData playerGameData) {

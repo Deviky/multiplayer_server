@@ -2,6 +2,7 @@ package com.cybersport.room.service;
 
 import com.cybersport.room.api.v1.dto.*;
 import com.cybersport.room.api.v1.mapper.RoomMapper;
+import com.cybersport.room.enums.PlayerTeam;
 import jakarta.annotation.PreDestroy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -126,10 +127,25 @@ public class RoomService {
             }
             else {
                 roomWebSocketService.notifyToStartGame(roomId);
+                List<PlayerGameData> readyPlayerGameDataList = roomRedisService.getAllPlayersGameData(roomId);
+
+                if (readyPlayerGameDataList == null) {
+                    throw new IllegalStateException("Список игроков не загружен!");
+                }
+
+                boolean assignToRedTeam = true;
+                for (PlayerGameData player : readyPlayerGameDataList) {
+                    if (player == null) {
+                        throw new IllegalStateException("Один из объектов PlayerGameData равен null!");
+                    }
+                    player.setTeam(assignToRedTeam ? PlayerTeam.REDTEAM : PlayerTeam.BLUETEAM);
+                    assignToRedTeam = !assignToRedTeam;
+                }
+
                 int serverPort = gameServiceClient.createGameRoom(
                         RoomGameData.builder()
                                 .roomId(roomId)
-                                .players(roomRedisService.getAllPlayersGameData(roomId))
+                                .players(readyPlayerGameDataList)
                                 .build()
                 );
                 roomWebSocketService.sendServerPort(roomId, serverPort);

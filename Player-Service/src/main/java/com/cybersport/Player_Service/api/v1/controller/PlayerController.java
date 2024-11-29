@@ -18,6 +18,7 @@ public class PlayerController {
     @Autowired
     private PlayerService playerService;
 
+
     @PostMapping("/create")
     public ResponseEntity<Long> createPlayer(@RequestBody PlayerDTORequest player){
         Long id = playerService.createPlayer(player);
@@ -30,6 +31,7 @@ public class PlayerController {
         return ResponseEntity.ok(players);
     }
 
+    @CrossOrigin
     @GetMapping("/{id}")
     public ResponseEntity<PlayerDTOResponse> findPlayer(@PathVariable Long id){
         PlayerDTOResponse player = playerService.getPlayerById(id);
@@ -37,6 +39,7 @@ public class PlayerController {
                 return ResponseEntity.notFound().build();
         return ResponseEntity.ok(player);
     }
+
 
     @PutMapping("/renick")
     public ResponseEntity<?> renickPlayer(@RequestBody Long id, @RequestBody String newNickname) {

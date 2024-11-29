@@ -15,7 +15,6 @@ public class GameServiceClient {
     @Autowired
     private WebClient webClient;
 
-
     public Integer createGameRoom(RoomGameData roomGameData) {
         return webClient.post()
                 .uri("http://localhost:8096/game/start")

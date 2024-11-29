@@ -26,6 +26,6 @@ public class Room {
     private RoomStatus status;
     private Integer lowElo;
     private Integer highElo;
-    private Integer minPlayers;
+    private Integer playersCount;
     private LocalDateTime createdAt;
 }

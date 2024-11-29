@@ -9,7 +9,6 @@ public enum WebSocketMessageType {
     PLAYER_ACCEPT_GAME,
     START_CONNECTION,
     TIME_OUT,
-
     SERVER_PORT
 
 }

@@ -43,7 +43,7 @@ public class RoomServiceData {
                 .status(RoomStatus.WAITING)
                 .lowElo(player.getElo() - 200)
                 .highElo(player.getElo() + 200)
-                .minPlayers(minPlayers)
+                .playersCount(minPlayers)
                 .build();
 
         RoomPlayer creatorPlayer = RoomPlayer.builder()
@@ -89,7 +89,7 @@ public class RoomServiceData {
         }
 
         Room room = roomOpt.get();
-        if (room.getRoomPlayers().size() >= 6) {
+        if (room.getRoomPlayers().size() >= room.getPlayersCount()) {
             return JoinRoomResponseDTO.builder()
                     .isError(true)
                     .message("ERROR: room is crowded!")
@@ -152,7 +152,7 @@ public class RoomServiceData {
 
 
     public Room findRoomById(Long roomId){
-        return roomRepository.findById(roomId).orElse(null);
+        return roomRepository.findById(roomId).orElseThrow();
     }
 
     @Transactional
@@ -246,7 +246,7 @@ public class RoomServiceData {
         if (roomOpt.isEmpty())
             return StartGameRoomResponse.builder()
                     .isError(true)
-                    .message("ERROR: FATAL!")
+                    .message("FATAL ERROR!")
                     .build();
         Room room = roomOpt.get();
         if (!room.getCreator().equals(playerId))
@@ -254,7 +254,7 @@ public class RoomServiceData {
                     .isError(true)
                     .message("ERROR: you're not a leader!")
                     .build();
-        if (room.getRoomPlayers().size() < room.getMinPlayers())
+        if (room.getRoomPlayers().size() < room.getPlayersCount())
             return StartGameRoomResponse.builder()
                     .isError(true)
                     .message("ERROR: not enough players to start the game")
@@ -276,7 +276,7 @@ public class RoomServiceData {
             return AcceptGameRoomDTO.builder()
                     .isError(true)
                     .isLast(false)
-                    .message("ERROR: FATAL!")
+                    .message("FATAL ERROR!")
                     .playerAcceptedCount(null)
                     .build();
         Room room = roomOpt.get();
@@ -304,7 +304,7 @@ public class RoomServiceData {
         roomPlayer.setPlayerStatus(PlayerStatus.ACCEPTED);
         roomPlayerRepository.save(roomPlayer);
         int playersAcceptedCount = getAcceptedPlayersCount(roomId);
-        if (playersAcceptedCount == room.getMinPlayers()){
+        if (playersAcceptedCount == room.getPlayersCount()){
             room.setStatus(RoomStatus.INGAME);
             roomRepository.save(room);
             return AcceptGameRoomDTO.builder()

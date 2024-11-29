@@ -1,7 +1,7 @@
 package com.cybersport.Game_Service.controller;
 
 import com.cybersport.Game_Service.dto.RoomGameData;
-import com.cybersport.Game_Service.server.GameService;
+import com.cybersport.Game_Service.service.GameService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
