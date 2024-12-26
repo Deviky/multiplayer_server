@@ -7,6 +7,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PlayerDTORequest {
+    private Long id;
     private String nickname;
 }
 

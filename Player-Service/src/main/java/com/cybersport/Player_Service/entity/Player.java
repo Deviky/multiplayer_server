@@ -10,7 +10,6 @@ import lombok.*;
 @Builder
 public class Player {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
     Long id;
     String nickname;
     Integer elo;
