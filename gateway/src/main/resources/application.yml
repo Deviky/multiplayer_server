@@ -1,0 +1,46 @@
+server:
+  port: 8966
+
+eureka:
+  client:
+    instance:
+      hostname: localhost
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+spring:
+  application:
+    name: GATEWAY
+  config:
+    import: optional:configserver:http://localhost:8888
+  cloud:
+    gateway:
+      routes:
+        - id: ROOM-SERVICE
+          uri: lb://ROOM-SERVICE
+          predicates:
+            - Path=/room/**
+          filters:
+            - JwtAuthFilter
+
+        - id: PLAYER-SERVICE
+          uri: lb://PLAYER-SERVICE
+          predicates:
+            - Path=/player/**
+          filters:
+            - JwtAuthFilter
+
+        - id: AUTH-SERVICE
+          uri: lb://AUTH-SERVICE
+          predicates:
+            - Path=/auth/**
+          filters:
+            - JwtAuthFilter
+
+
+logging:
+  level:
+    root: INFO # ????? ??????? ???????????
+    com.multiplayerserver: DEBUG # ??????????? ??? ?????? ??????
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n" # ????????? ??????? ?????? ? ???????

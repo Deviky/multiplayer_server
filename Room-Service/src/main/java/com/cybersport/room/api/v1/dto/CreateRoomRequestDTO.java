@@ -11,6 +11,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class CreateRoomRequestDTO {
-    private Long creatorId;
     private Integer minPlayers;
 }

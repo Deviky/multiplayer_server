@@ -7,18 +7,36 @@ import com.cybersport.room.entity.RoomPlayer;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
+import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Mapper(componentModel = "spring")
-public interface RoomMapper {
+@Service
+public class RoomMapper {
 
-    @Mapping(target = "players", expression = "java(mapPlayers(room.getRoomPlayers()))")
-    RoomDTO roomToRoomDTO(Room room);
+    // Метод для преобразования Room в RoomDTO
+    public RoomDTO roomToRoomDTO(Room room) {
+        if (room == null) {
+            return null;
+        }
 
-    default List<Long> mapPlayers(List<RoomPlayer> roomPlayers) {
+        List<Long> players = mapPlayers(room.getRoomPlayers());
+
+        return RoomDTO.builder()
+                .id(room.getId())
+                .players(players)
+                .creator(room.getCreator())
+                .status(room.getStatus())
+                .lowElo(room.getLowElo())
+                .highElo(room.getHighElo())
+                .createdAt(room.getCreatedAt())
+                .build();
+    }
+
+    // Метод для маппинга игроков
+    private List<Long> mapPlayers(List<RoomPlayer> roomPlayers) {
         if (roomPlayers == null || roomPlayers.isEmpty()) {
             return Collections.emptyList();
         }
@@ -26,5 +44,4 @@ public interface RoomMapper {
                 .map(RoomPlayer::getPlayerId)
                 .collect(Collectors.toList());
     }
-
 }

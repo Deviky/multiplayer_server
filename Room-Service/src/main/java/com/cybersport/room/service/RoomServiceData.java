@@ -35,7 +35,12 @@ public class RoomServiceData {
                     .message("ERROR: you are in another room now!")
                     .build();
         }
-
+        if (creatorId == null){
+            return CreateRoomResponseDTO.builder()
+                    .roomId(null)
+                    .message("ERROR: FATAL!")
+                    .build();
+        }
         Player player = playerServiceClient.getPlayerById(creatorId);
         Room room = Room.builder()
                 .creator(creatorId)
